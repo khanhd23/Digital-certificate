@@ -14,7 +14,7 @@ const (
 	PQCDefaultAlgorithm   = PQCAlgorithmMLDSA65
 	PQCProofVersion       = 1
 	PQCAnchorVersion      = 1
-	PQCSignatureContext   = "PQC-DIPLOMA-V1"
+	PQCSignatureContext   = "PQC-EDIPLOMA-V1"
 	PQCTransactionVersion = 1
 	PQCTransactionContext = "VBS-PQC-FABRIC-TX-V1"
 
