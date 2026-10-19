@@ -7,14 +7,14 @@ import (
 )
 
 const (
-	// FIPS 204 parameter sets. ML-DSA-65 (NIST category 3) is the recommended default.
+	// FIPS 204 parameter sets supported by the signing service.
 	PQCAlgorithmMLDSA44   = "ML-DSA-44"
 	PQCAlgorithmMLDSA65   = "ML-DSA-65"
 	PQCAlgorithmMLDSA87   = "ML-DSA-87"
 	PQCDefaultAlgorithm   = PQCAlgorithmMLDSA65
 	PQCProofVersion       = 1
 	PQCAnchorVersion      = 1
-	PQCSignatureContext   = "PQC-EDIPLOMA-V1"
+	PQCSignatureContext   = "PQC-DIPLOMA-V1"
 	PQCTransactionVersion = 1
 	PQCTransactionContext = "VBS-PQC-FABRIC-TX-V1"
 
@@ -83,7 +83,7 @@ type PQCProof struct {
 	SignedAt             time.Time `bson:"signed_at" json:"signed_at"`
 }
 
-// PQCTransactionAttestation binds the Fabric payload to the university's ML-DSA key.
+// PQCTransactionAttestation binds the Fabric payload to an ML-DSA-65 key.
 // Fabric still authenticates and endorses the transaction with X.509; this
 // attestation provides an independent post-quantum signature over the payload
 // being anchored.
@@ -130,13 +130,12 @@ type BlockchainAnchorVerification struct {
 	PQCTransactionChecked bool   `json:"pqc_transaction_checked"`
 	PQCTransactionValid   bool   `json:"pqc_transaction_valid"`
 	PQCTransactionKeyID   string `json:"pqc_transaction_key_id,omitempty"`
+	RevocationStatus      string `json:"revocation_status,omitempty"`
+	RevokedOnChain        bool   `json:"revoked_on_chain"`
+	RevocationID          string `json:"revocation_id,omitempty"`
+	RevocationTxID        string `json:"revocation_tx_id,omitempty"`
+	RevokedAtOnChain      string `json:"revoked_at_on_chain,omitempty"`
 	Error                 string `json:"error,omitempty"`
-	// Revocation read from the ledger: "not_revoked", "revoked" or "unavailable".
-	RevocationStatus string `json:"revocation_status,omitempty"`
-	RevokedOnChain   bool   `json:"revoked_on_chain"`
-	RevocationID     string `json:"revocation_id,omitempty"`
-	RevocationTxID   string `json:"revocation_tx_id,omitempty"`
-	RevokedAtOnChain string `json:"revoked_at_on_chain,omitempty"`
 }
 
 type PQCVerificationResult struct {
@@ -160,8 +159,7 @@ type PQCVerificationResult struct {
 }
 
 type CreatePQCKeyRequest struct {
-	Name string `json:"name" binding:"required,min=3,max=100"`
-	// Empty means PQCDefaultAlgorithm.
+	Name      string `json:"name" binding:"required,min=3,max=100"`
 	Algorithm string `json:"algorithm" binding:"omitempty,oneof=ML-DSA-44 ML-DSA-65 ML-DSA-87"`
 }
 
@@ -172,8 +170,8 @@ type RevokePQCKeyRequest struct {
 
 type SignPQCFilterRequest struct {
 	FacultyID       string `json:"faculty_id"`
-	RoundID         string `json:"round_id"`
 	TemplateID      string `json:"template_id"`
 	CertificateType string `json:"certificate_type"`
 	Course          string `json:"course"`
+	RoundID         string `json:"round_id"`
 }

@@ -2,11 +2,8 @@ package handlers
 
 import (
 	"errors"
-	"io"
 	"math"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -401,138 +398,6 @@ func generationStatus(err error) int {
 		return http.StatusConflict
 	}
 	return http.StatusInternalServerError
-}
-
-type generateBulkEDiplomaRequest struct {
-	FacultyID  string `json:"faculty_id" binding:"required"`
-	TemplateID string `json:"template_id" binding:"required"`
-}
-
-func (h *EDiplomaHandler) GenerateBulkEDiplomas(c *gin.Context) {
-	var req generateBulkEDiplomaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Dữ liệu không hợp lệ"})
-		return
-	}
-
-	ediplomas, err := h.ediplomaService.GenerateBulkEDiplomas(c.Request.Context(), req.FacultyID, req.TemplateID)
-	if err != nil {
-		c.JSON(generationStatus(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, ediplomas)
-}
-
-func (h *EDiplomaHandler) UploadLocalEDiplomas(c *gin.Context) {
-	results := h.ediplomaService.UploadLocalEDiplomas(c.Request.Context())
-
-	c.JSON(http.StatusOK, gin.H{
-		"total_files": len(results),
-		"results":     results,
-	})
-}
-
-func (h *EDiplomaHandler) UploadEDiplomasZip(c *gin.Context) {
-
-	claimsRaw, exists := c.Get("claims")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"})
-		return
-	}
-
-	claims, ok := claimsRaw.(*utils.CustomClaims)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"})
-		return
-	}
-
-	universityID, err := primitive.ObjectIDFromHex(claims.UniversityID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại"})
-		return
-	}
-
-	fileHeader, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Vui lòng chọn tệp ZIP"})
-		return
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Không thể mở tệp đã tải lên"})
-		return
-	}
-	defer file.Close()
-
-	tempZipPath := filepath.Join(os.TempDir(), fileHeader.Filename)
-	out, err := os.Create(tempZipPath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lưu tệp đã tải lên"})
-		return
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, file); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lưu tệp đã tải lên"})
-		return
-	}
-
-	// Gọi service xử lý zip và lấy các bản ghi EDiploma đã update
-	updatedDiplomas, err := h.ediplomaService.ProcessZip(c.Request.Context(), tempZipPath, universityID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"total_files": len(updatedDiplomas),
-		"results":     updatedDiplomas,
-	})
-}
-
-func (h *EDiplomaHandler) GenerateBulkEDiplomasZip(c *gin.Context) {
-	var req struct {
-		FacultyID       string `form:"faculty_id" json:"faculty_id"`
-		CertificateType string `form:"certificate_type" json:"certificate_type"` // optional
-		Course          string `form:"course" json:"course"`                     // optional
-		Issued          *bool  `form:"issued" json:"issued"`                     // optional
-		TemplateID      string `form:"template_id" json:"template_id" binding:"required"`
-	}
-
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Dữ liệu không hợp lệ",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	zipFilePath, err := h.ediplomaService.GenerateBulkEDiplomasZip(
-		c.Request.Context(),
-		req.FacultyID,
-		req.CertificateType,
-		req.Course,
-		req.Issued,
-		req.TemplateID,
-	)
-	if err != nil {
-		c.JSON(generationStatus(err), gin.H{"error": err.Error()})
-		return
-	}
-
-	if zipFilePath == "" {
-		// Không có văn bằng nào được cấp
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Không có văn bằng nào được cấp theo bộ lọc này",
-		})
-		return
-	}
-
-	// Nếu có zip, gửi file
-	c.FileAttachment(zipFilePath, "ediplomas.zip")
-	_ = os.RemoveAll(filepath.Dir(zipFilePath))
 }
 
 func (h *EDiplomaHandler) GetEDiplomaByID(c *gin.Context) {

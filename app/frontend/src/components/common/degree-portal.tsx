@@ -34,6 +34,7 @@ import {
 import { getUserFriendlyErrorMessage, showNotification } from '@/lib/utils/common'
 import { signPQCEDiploma } from '@/lib/api/pqc'
 import { ProgressRow, StatTile } from './stat-tile'
+import VerificationCodeField from './verification-code-field'
 
 const panel = 'rounded-xl border bg-card p-5 shadow-sm'
 const date = (value: string) => new Date(value).toLocaleString('vi-VN')
@@ -203,6 +204,7 @@ export function DegreeActions({ degree, onChange }: { degree: any; onChange: () 
             <div className='mx-auto rounded-2xl border bg-white p-6'>
               {qr && <QRCodeSVG value={`${window.location.origin}/verify/${degree.id}`} size={220} level='M' />}
             </div>
+            <VerificationCodeField code={degree.id} />
             <Link
               className='text-center text-sm text-indigo-600 underline'
               href={`/verify/${degree.id}`}

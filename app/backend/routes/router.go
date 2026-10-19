@@ -152,9 +152,6 @@ func SetupRouter(
 	ediplomaGroup.POST("/assign-round", ediplomaHandler.AssignRound)
 	ediplomaGroup.POST("/revoke-batch", ediplomaHandler.RevokeRound)
 	ediplomaGroup.POST("/generate", ediplomaHandler.GenerateEDiploma)
-	ediplomaGroup.POST("/generate-bulk", ediplomaHandler.GenerateBulkEDiplomas)
-	ediplomaGroup.POST("/generate-bulk-zip", ediplomaHandler.GenerateBulkEDiplomasZip)
-	ediplomaGroup.POST("/upload-zip", ediplomaHandler.UploadEDiplomasZip)
 	ediplomaGroup.POST("/:id/replace", portal.Replace)
 	ediplomaGroup.POST("/:id/revoke", ediplomaHandler.RevokeEDiploma)
 	api.GET("/ediplomas/:id", jwt, readers, ownDiploma, ediplomaHandler.GetEDiplomaByID)
@@ -169,7 +166,6 @@ func SetupRouter(
 
 	// ===== Blockchain anchoring =====
 	blockchainGroup := api.Group("/blockchain", jwt, school)
-	blockchainGroup.POST("/push-ediploma-merkle-tree", blockchainHandler.PushEDiplomasToBlockchain)
 	blockchainGroup.POST("/push-ediploma", blockchainHandler.PushEDiplomasToBlockchain)
 	blockchainGroup.POST("/push-revocations", blockchainHandler.PushRevocationsToBlockchain)
 

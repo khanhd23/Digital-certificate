@@ -303,7 +303,7 @@ func isAuditedAction(path, method string) bool {
 	if method != "POST" && method != "PUT" && method != "PATCH" {
 		return false
 	}
-	for _, prefix := range []string{"/ediplomas", "/pqc/keys", "/pqc/ediplomas", "/blockchain/push-ediploma", "/blockchain/push-ediploma-merkle-tree", "/blockchain/push-revocations", "/issuance-rounds", "/universities"} {
+	for _, prefix := range []string{"/ediplomas", "/pqc/keys", "/pqc/ediplomas", "/blockchain/push-ediploma", "/blockchain/push-revocations", "/issuance-rounds", "/universities"} {
 		if strings.HasPrefix(path, prefix) {
 			return true
 		}

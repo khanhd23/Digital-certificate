@@ -30,22 +30,6 @@ export const searchDigitalDegreeList = async (params: any) => {
   return res
 }
 
-export const issueDownloadDegreeZip = async (facultyId: string, templateId: string) => {
-  const blob = await apiService(
-    'POST',
-    `ediplomas/generate-bulk-zip`,
-    {
-      faculty_id: facultyId,
-      template_id: templateId
-    },
-    true,
-    { Accept: 'application/zip' },
-    true
-  )
-
-  return blob
-}
-
 export const issueDigitalDegree = async (ediplomaId: string, templateId: string) => {
   return apiService('POST', 'ediplomas/generate', {
     ediploma_id: ediplomaId,

@@ -107,13 +107,11 @@ func (s *blockchainService) PushToBlockchain(
 	infoHashes := []string{}
 	fileHashes := []string{}
 	hashMap := map[string]*models.EDiploma{} // map hash -> EDiploma để sinh proof sau
-	hasPQCProof := false
 
 	for _, ed := range ediplomas {
-		if (ed.DataEncrypted || ed.PQCProof != nil) && ed.Issued && !ed.OnBlockchain && !ed.Revoked {
-			if ed.PQCProof != nil {
-				hasPQCProof = true
-			}
+		// The reported issuance flow is generate-and-sign. Only diplomas with
+		// a completed PQC proof and a PDF hash may enter an on-chain batch.
+		if ed.PQCProof != nil && strings.TrimSpace(ed.EDiplomaFileHash) != "" && ed.Issued && !ed.OnBlockchain && !ed.Revoked {
 			hInfo, err := hashEDiplomaInfo(ed)
 			if err != nil {
 				log.Printf("[BlockchainService] hash failed for %s: %v", ed.StudentCode, err)
@@ -161,13 +159,11 @@ func (s *blockchainService) PushToBlockchain(
 		AggregateFileHash: merkleFileRoot,
 		Count:             len(infoHashes),
 	}
-	if hasPQCProof {
-		if s.pqcTxSigner == nil {
-			return 0, errors.New("PQC transaction signer is not configured")
-		}
-		if err := s.pqcTxSigner.SignEDiplomaBatch(ctx, &batchOnChain); err != nil {
-			return 0, fmt.Errorf("sign blockchain transaction with PQC: %w", err)
-		}
+	if s.pqcTxSigner == nil {
+		return 0, errors.New("PQC transaction signer is not configured")
+	}
+	if err := s.pqcTxSigner.SignEDiplomaBatch(ctx, &batchOnChain); err != nil {
+		return 0, fmt.Errorf("sign blockchain transaction with PQC: %w", err)
 	}
 
 	// Push lên blockchain

@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Download, QrCode } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
+import VerificationCodeField from './verification-code-field'
 
 // The single public verification link: QR codes, emails and shares all point here.
 export const verifyUrl = (id: string) =>
@@ -44,6 +45,7 @@ const DigitalDegreeQR: React.FC<{ id: string; name?: string }> = ({ id, name }) 
         <div className='mx-auto rounded-2xl border bg-white p-6'>
           {open && <QRCodeSVG ref={qrRef} value={verifyUrl(id)} size={220} level='M' />}
         </div>
+        <VerificationCodeField code={id} />
         <div className='flex flex-wrap justify-center gap-2'>
           <Button variant='secondary' onClick={download}>
             <Download /> Tải mã QR
